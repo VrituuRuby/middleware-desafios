@@ -10,19 +10,56 @@ app.use(cors());
 const users = [];
 
 function checksExistsUserAccount(request, response, next) {
-  // Complete aqui
+  const {username} = request.headers;
+
+  const userExists = users.find(user => username === user.username);
+
+  if (!userExists) return response.status(404).json({error: 'User does not exist'});
+
+  request.user = userExists
+  return next();
 }
 
 function checksCreateTodosUserAvailability(request, response, next) {
-  // Complete aqui
+  //is on free licence without 10 todos created or if has pro licence
+  const {user} = request;
+
+  if (user.todos.length + 1 > 10 && user.pro === false) {
+    return response.status(403).json({error: "Limit of existing free to-do's reached by the user"})
+  }
+
+  return next();
 }
 
 function checksTodoExists(request, response, next) {
-  // Complete aqui
+  const {username} = request.headers;
+  const {id} = request.params;
+
+  if (!validate(id)) return response.status(400).json({error: "Invalid id param"})
+  const userExists = users.find(user => username === user.username);
+
+  if (!userExists) return response.status(404).json({error: 'User does not exist'});
+  
+  const todoExists = userExists.todos.find(todo => id === todo.id);
+  
+  if (!todoExists) return response.status(404).json({error: 'To-do does not exist'});
+  
+
+  request.user = userExists
+  request.todo = todoExists;
+
+  return next();
 }
 
 function findUserById(request, response, next) {
-  // Complete aqui
+  const {id} = request.params;
+  if (!validate(id)) return response.status(403).json({error: "Invalid id param"});
+  
+  const userExists = users.find(user => id === user.id)
+  if (!userExists) return response.status(404).json({error: "User does not exist"});
+
+  request.user = userExists
+  return next();
 }
 
 app.post('/users', (request, response) => {
